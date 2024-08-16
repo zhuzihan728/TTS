@@ -3,8 +3,9 @@ import gradio as gr
 import os
 from Levenshtein import distance as levenshtein_distance
 from utils import normalized_text_to_phonemes
-from api import to_wave, TTS_FNs
+from api import to_wave, call_vits_ft, TTS_FNs
 from asr import load_asr_model, transcribe_audio
+import ddc
 ASR_MODEL = None
 asr_model = None
 asr_processor = None
@@ -12,7 +13,7 @@ asr_processor = None
 generated_audio_paths = []
 ground_truth_audio_paths = []
 transcriptions = []
-
+print(TTS_FNs)
 def calculate_phoneme_error_rate(asr_text, ground_truth_text):
     asr_phonemes = normalized_text_to_phonemes(asr_text)
     ground_truth_phonemes = normalized_text_to_phonemes(ground_truth_text)
@@ -42,6 +43,12 @@ def calculate_per(asr_model_name):
     
     return f"Average PER for {len(per_list)} items: {avg_per:.4f}"
 
+def calulate_ddc():
+    ddc_scores = ddc.get_avg_ddc(generated_audio_paths)
+    print([i for i in zip(generated_audio_paths, ddc_scores)])
+    avg_ddc = sum(ddc_scores) / len(ddc_scores)
+    return f"Average DDC for {len(ddc_scores)} items: {avg_ddc:.4f}"
+
 def load_json(json_file):
     global ground_truth_audio_paths, transcriptions
     
@@ -69,14 +76,15 @@ def create_gradio_ui():
         tts_function_input = gr.Dropdown(label="Select TTS Function", choices=list(TTS_FNs.keys()))
         asr_model_input = gr.Dropdown(label="Enter ASR Whisper Size", choices=["small", "medium", "large"])
         generate_button = gr.Button("Generate Audio from JSON")
-        calculate_button = gr.Button("Calculate PER")
+        PER_button = gr.Button("Calculate PER")
+        DDC_button = gr.Button("Calculate DDC")
         output_display = gr.Textbox(label="Output")
 
         # Set up interactions
         json_input.change(load_json, inputs=json_input, outputs=output_display)
         generate_button.click(generate_audio_from_json, inputs=tts_function_input, outputs=output_display)
-        calculate_button.click(calculate_per, inputs=asr_model_input, outputs=output_display)
-
+        PER_button.click(calculate_per, inputs=asr_model_input, outputs=output_display)
+        DDC_button.click(calulate_ddc, outputs=output_display)
     return demo
 
 # Run the Gradio app
