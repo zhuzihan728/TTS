@@ -1,0 +1,4 @@
+*wav
+/test.ipynb
+*.pyc
+/ready_models/*

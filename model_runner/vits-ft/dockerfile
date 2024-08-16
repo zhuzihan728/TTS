@@ -1,0 +1,47 @@
+FROM python:3.11-slim
+
+# Install dependencies necessary to build and run FFmpeg
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    yasm \
+    git \
+    curl \
+    portaudio19-dev \
+    libffi-dev \
+    libssl-dev \
+    libx264-dev \
+    libopus-dev
+
+RUN echo "deb http://deb.debian.org/debian/ bullseye main\ndeb-src http://deb.debian.org/debian/ bullseye main" | tee /etc/apt/sources.list.d/ffmpeg.list  &&\
+    apt-get update && \
+    apt-get install -y ffmpeg
+
+
+RUN git clone https://github.com/Plachtaa/VITS-fast-fine-tuning.git
+
+COPY . /VITS-fast-fine-tuning
+WORKDIR /VITS-fast-fine-tuning
+RUN ls
+
+RUN python -m pip install --upgrade --force-reinstall regex
+RUN python -m pip install --force-reinstall soundfile
+RUN python -m pip install --force-reinstall gradio
+RUN python -m pip install imageio==2.4.1
+RUN python -m pip install --upgrade youtube-dl
+RUN python -m pip install moviepy
+
+RUN python -m pip install --upgrade numpy
+RUN python -m pip install --upgrade --force-reinstall numba
+RUN python -m pip install --upgrade Cython
+
+RUN python -m pip install --upgrade pyzmq
+RUN python -m pip install pydantic==1.10.4
+RUN python -m pip install ruamel.yaml
+RUN python -m pip install git+https://github.com/openai/whisper.git
+RUN python -m pip install -U ffmpeg-python
+RUN python -m pip install -r requirements_v2.txt
+RUN cd monotonic_align/; mkdir -p monotonic_align; python setup.py build_ext --inplace
+
+EXPOSE 6969
+CMD ["python", "app.py"]
