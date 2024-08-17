@@ -6,6 +6,7 @@ from utils import normalized_text_to_phonemes
 from api import to_wave, call_vits_ft, TTS_FNs
 from asr import load_asr_model, transcribe_audio
 import ddc
+import spk_verify
 ASR_MODEL = None
 asr_model = None
 asr_processor = None
@@ -35,19 +36,26 @@ def calculate_per(asr_model_name):
     
     for i in range(len(ground_truth_audio_paths)):
         # ground_truth_transcription = transcriptions[i]
-        ground_truth_asr = transcribe_audio(ground_truth_audio_paths[i], model)
+        ground_truth_asr = transcriptions[i]
         generated_asr = transcribe_audio(generated_audio_paths[i], model)
         per_list.append(calculate_phoneme_error_rate(generated_asr, ground_truth_asr))
     
     avg_per = sum(per_list) / len(per_list)
     
-    return f"Average PER for {len(per_list)} items: {avg_per:.4f}"
+    return f"Average Phoneme Error Rate for {len(per_list)} items: {avg_per:.4f}"
 
 def calulate_ddc():
     ddc_scores = ddc.get_avg_ddc(generated_audio_paths)
     print([i for i in zip(generated_audio_paths, ddc_scores)])
     avg_ddc = sum(ddc_scores) / len(ddc_scores)
-    return f"Average DDC for {len(ddc_scores)} items: {avg_ddc:.4f}"
+    return f"Average DeepFake Detection Score for {len(ddc_scores)} items: {avg_ddc:.4f}"
+
+def calculate_svs():
+    speaker_verification_scores = []
+    for i in range(0, len(ground_truth_audio_paths)):
+        speaker_verification_scores.append(spk_verify.speaker_verification(ground_truth_audio_paths[i], generated_audio_paths[i]))
+    avg_svs = sum(speaker_verification_scores) / len(speaker_verification_scores)
+    return f"Average Speaker Verification Score for {len(speaker_verification_scores)} items: {avg_svs:.4f}"
 
 def load_json(json_file):
     global ground_truth_audio_paths, transcriptions
@@ -78,6 +86,7 @@ def create_gradio_ui():
         generate_button = gr.Button("Generate Audio from JSON")
         PER_button = gr.Button("Calculate PER")
         DDC_button = gr.Button("Calculate DDC")
+        SPK_button = gr.Button("Calculate SVS")
         output_display = gr.Textbox(label="Output")
 
         # Set up interactions
@@ -85,6 +94,7 @@ def create_gradio_ui():
         generate_button.click(generate_audio_from_json, inputs=tts_function_input, outputs=output_display)
         PER_button.click(calculate_per, inputs=asr_model_input, outputs=output_display)
         DDC_button.click(calulate_ddc, outputs=output_display)
+        SPK_button.click(calculate_svs, outputs=output_display)
     return demo
 
 # Run the Gradio app
