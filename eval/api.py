@@ -40,7 +40,10 @@ def call_vits_ft(text: str) :
 def to_wave(audio, rate, output_path):
     sf.write(output_path, audio, rate)
 
-TTS_FNs = {call_vits_ft.__name__: call_vits_ft}
+TTS_FNs = {
+    'ground truth': None,
+    call_vits_ft.__name__: call_vits_ft
+}
 
 if __name__ == "__main__":
     text = "你好，我是琪亚娜！"
