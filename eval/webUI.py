@@ -34,7 +34,7 @@ def calculate_per(asr_model_name):
     model = asr_model
     
     per_list = []
-    
+    global ground_truth_audio_paths, transcriptions, generated_audio_paths
     for i in range(len(ground_truth_audio_paths)):
         # ground_truth_transcription = transcriptions[i]
         ground_truth_asr = transcriptions[i]
@@ -62,8 +62,8 @@ def calculate_metrics(asr_model_name, tts_function_name, json_path):
     per = calculate_per(asr_model_name)
     ddc = calulate_ddc()
     svs = calculate_svs()
-    history.append([tts_function_name, per, ddc, svs, asr_model_name, os.path.basename(json_path.name)])
-    return f"{tts_function_name} with {asr_model_name} ASR model: PER={per:.4f}, DDC={ddc:.4f}, SVS={svs:.4f}", history
+    history.append([tts_function_name, per, svs, ddc, asr_model_name, os.path.basename(json_path.name)])
+    return f"{tts_function_name} with {asr_model_name} ASR model: PER={per:.4f}, SVS={svs:.4f}, DDC={ddc:.4f}", history
 
 
 def load_json(json_file):
@@ -99,7 +99,7 @@ def create_gradio_ui():
         generate_button = gr.Button("Generate Audio from JSON")
         metrics_button = gr.Button("Calculate Metrics")
         output_display = gr.Textbox(label="Output")
-        history_display = gr.Dataframe(label="History", headers=['TTS model', 'PER', 'DDC', 'SVS', 'ASR model', 'JSON path'], datatype=['str', 'number', 'number', 'number', 'str', 'str'])
+        history_display = gr.Dataframe(label="History", headers=['TTS model', 'PER (Phoneme Error Rate)', 'SVS (Speaker Similarity)', 'DDC (Deepfake Score)', 'ASR model', 'JSON path'], datatype=['str', 'number', 'number', 'number', 'str', 'str'])
         
 
         # Set up interactions
